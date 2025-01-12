@@ -42,8 +42,8 @@ async function generatePDFFromDocs(templateFile, values) {
   fillTemplate(newFile, values)
   newFile.setTrashed(true)
   return {
-    blob: newFile.getAs('application/pdf'),
-    url: newFile.getUrl()
+    pdfBlob: newFile.getAs('application/pdf'),
+    googleDocsFileUrl: newFile.getUrl()
   }
 }
 

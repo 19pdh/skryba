@@ -1,7 +1,7 @@
 // TODO: change this to your email
 const MAINTAINER = "patryk.niedzwiedzinski@zhr.pl";
 
-const RESPONSE_SHEET = "responses";
+const RESPONSE_SHEET = "form";
 const SETTINGS_SHEET = "settings";
 
 const MAIL_TITLE = "[Skryba] Uzupełniony plik";
@@ -17,7 +17,7 @@ const fileNaming = fileName => `${fileName} - wypełniony szablon.pdf`;
 async function onFormSubmit(e) {
   try {
   const response = getFormResponse(e);
-  const submitter = response.filter(el => el.name === "submitter").value
+  const submitter = response.filter(el => el.name === "submitter")[0].value
 
   const settings = getSettings();
 
