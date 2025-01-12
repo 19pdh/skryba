@@ -14,7 +14,7 @@ function getIdFromUrl(url) {
  * This function will check if template file is a valid one and then run pdf generation procedure
  *
  * @param {String} templateUrl Link to template file on Google Drive
- * @param {Object} values Dictionary-like structure containing values to be written
+ * @param {Array} values Array of object with parameters `name` and `value`
  * @return {Object} Object containing blob with generated PDF and url to source file
  */
 async function generatePDF(templateUrl, values) {
@@ -34,11 +34,11 @@ async function generatePDF(templateUrl, values) {
  * This function will create new document and return PDF blob and url to source file, which will be deleted
  *
  * @param {Drive.File} templateFile Template file to generate PDF from
- * @param {Object} values Dictionary-like structure containing values to be written
+ * @param {Array} values Array of object with parameters `name` and `value`
  * @return {Object} Object containing blob with generated PDF and url to source file
  */
 async function generatePDFFromDocs(templateFile, values) {
-  const newFile = templateFile.makeCopy("Google Templater Copy");
+  const newFile = templateFile.makeCopy("Skryba - wypełniony szablon");
   fillTemplate(newFile, values)
   newFile.setTrashed(true)
   return {
@@ -52,12 +52,12 @@ async function generatePDFFromDocs(templateFile, values) {
  * This function will replace strings like '{{name}}' with corresponding values from `values`
  *
  * @param {Drive.File} newFile New file copied from template, will be overwritten
- * @param {Object} values Dictionary-like structure containing values to be written
+ * @param {Array} values Array of object with parameters `name` and `value`
  */
 function fillTemplate(newFile, values) {
   const newDoc = DocumentApp.openById(newFile.getId())
   const body = newDoc.getBody()
-  for (let [ name, value ] of Object.entries(values)) {
+  for (let { name, value } of values) {
     if (value instanceof Date) {
       value = value.toLocaleDateString("pl-PL");
     }

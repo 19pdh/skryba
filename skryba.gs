@@ -17,9 +17,12 @@ const fileNaming = fileName => `${fileName} - wypełniony szablon.pdf`;
 async function onFormSubmit(e) {
   try {
   const response = getFormResponse(e);
+  const submitter = response.filter(el => el.name === "submitter").value
+
   const settings = getSettings();
-  const { blob, url } = await generatePDF(settings.templateUrl, response);
-  sendFile(settings.sendTo, blob, fields.submitter, url);
+
+  const { pdfBlob, googleDocsFileUrl } = await generatePDF(settings.templateUrl, response);
+  sendFile(settings.sendTo, pdfBlob, submitter, googleDocsFileUrl);
   } catch(err) {
     errorHandler(err)
   }
