@@ -5,7 +5,9 @@ const RESPONSE_SHEET = "form";
 const SETTINGS_SHEET = "settings";
 
 const MAIL_TITLE = "[Skryba] Uzupełniony plik";
-const mailBody = submitter => `Formularz uzupełniony przez: ${submitter}`;
+const mailBody = (submitter, file) => `Formularz uzupełniony przez: ${submitter}
+
+Uzupełniony plik w wersji edytowalnej: ${file.getUrl()}`;
 
 /**
  * ### Description
@@ -22,13 +24,13 @@ async function onFormSubmit(e) {
   
     const settings = getSettings();
   
-    const { pdfBlob, googleDocsFileUrl } = await generatePDF(settings, response);
+    const filledDocument = await generateDocument(settings, response);
 
-    sendFile(settings.sendTo, pdfBlob, submitter, googleDocsFileUrl);
+    sendFile(settings.sendTo, filledDocument, submitter);
 
     updateRow(
       rowNumber,
-      [ { name: "file", value: googleDocsFileUrl } ]
+      [ { name: "file", value: filledDocument.getUrl() } ]
     )
 
   } catch(err) {
@@ -92,26 +94,37 @@ function updateRow(rowNumber, entry) {
  * This function will send the PDF blob file
  *
  * @param {String} sendTo Email address
- * @param {Object} blob PDF blob object
+ * @param {Drive.File} googleFile File to create attachment from
  * @param {String} submitter Email address of form submitter
- * @param {String} fileUrl Optional fileUrl to append to mail body
  */
-function sendFile(sendTo, blob, submitter, fileUrl=undefined) {
+function sendFile(sendTo, googleFile, submitter) {
   const options = {
     name: "Skryba",
     replyTo: sendTo,
-    attachments : {
-      'fileName' : `${generateFileName(submitter)}.pdf`,
-      'mimeType' : 'application/pdf',
-      'content' : blob.getBytes()
-    }
+    attachments : generatePDFAttachment(googleFile)
   }
   MailApp.sendEmail(
     sendTo,
     MAIL_TITLE, 
-    mailBody(submitter) + (fileUrl ? `\n\n${fileUrl}` : ""),
+    mailBody(submitter, googleFile),
     options
   )
+}
+
+/**
+ * ### Description
+ * Generate mail attachment as PDF file
+ *
+ * @param {Drive.File} googleFile File to create attachment from
+ * @return {Object} Attachment description for MailApp.sendEmail
+ */
+function generatePDFAttachment(googleFile) {
+  const pdfBlob = googleFile.getAs('application/pdf')
+  return {
+    fileName: `${generateFileName(submitter)}.pdf`,
+    mimeType : 'application/pdf',
+    content : pdfBlob.getBytes()
+  }
 }
 
 /**
@@ -181,15 +194,17 @@ function getIdFromUrl(url) {
  * @param {Array} values Array of object with parameters `name` and `value`
  * @return {Object} Object containing blob with generated PDF and url to source file
  */
-async function generatePDF(settings, values) {
+async function generateDocument(settings, values) {
   const { templateUrl, folderUrl } = settings
   if (!templateUrl) { throw new Error("templateUrl is not defined") }
   if (!folderUrl) { throw new Error("folderUrl is not defined") }
+
   const templateFile = DriveApp.getFileById(getIdFromUrl(templateUrl))
   const fileType = templateFile.getMimeType()
   const isDocs = (fileType === "application/vnd.google-apps.document")
+
   if (isDocs) {
-    return await generatePDFFromDocs(
+    return await generateFromDocs(
       templateFile, 
       values, 
       DriveApp.getFolderById(getIdFromUrl(folderUrl))
@@ -206,18 +221,15 @@ async function generatePDF(settings, values) {
  * @param {Drive.File} templateFile Template file to generate PDF from
  * @param {Array} values Array of object with parameters `name` and `value`
  * @param {Drive.Folder} folder Folder where new files will be saved
- * @return {Object} Object containing blob with generated PDF and url to source file
+ * @return {Drive.File} New file from template
  */
-async function generatePDFFromDocs(templateFile, values, folder) {
+async function generateFromDocs(templateFile, values, folder) {
   const newFile = templateFile.makeCopy(
     generateFileName(getSubmitter(values)), 
     folder
   );
   fillTemplate(newFile, values)
-  return {
-    pdfBlob: newFile.getAs('application/pdf'),
-    googleDocsFileUrl: newFile.getUrl()
-  }
+  return newFile
 }
 
 /**
