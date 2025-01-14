@@ -8,6 +8,12 @@ Skryba został napisany bardzo minimalistycznie, żeby znając angielski zrozumi
 jak działa, a przy podstawowej znajomości programowania być w stanie dostosować
 działanie skryby pod swoje potrzeby.
 
+# Get started
+
+Otwórz
+[ten plik](https://docs.google.com/spreadsheets/d/1dZHp7EYPEqkQppTfCZmatav_lmWN5UIIXT4v6XBhHBo/edit?gid=761902334#gid=761902334),
+kliknij w menu Plik > Utwórz kopię, postępuj zgodnie z Instrukcją.
+
 ## updateSheets
 
 W folderze `utils` znajduje się skrypt updateSheets, który może aktualizować
