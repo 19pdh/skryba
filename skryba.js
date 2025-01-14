@@ -15,6 +15,7 @@ const mailBody = submitter => `Formularz uzupełniony przez: ${submitter}`;
  */
 async function onFormSubmit(e) {
   try {
+    Logger.log(e.namedValues)
     const rowNumber = e.range.getRow()
     const response = getFormResponse(rowNumber);
     const submitter = getSubmitter(response);
@@ -31,7 +32,7 @@ async function onFormSubmit(e) {
     )
 
   } catch(err) {
-    errorHandler(err)
+    errorHandler(err, e)
   }
 }
 
@@ -97,6 +98,8 @@ function updateRow(rowNumber, entry) {
  */
 function sendFile(sendTo, blob, submitter, fileUrl=undefined) {
   const options = {
+    name: "Skryba",
+    replyTo: sendTo,
     attachments : {
       'fileName' : `${generateFileName(submitter)}.pdf`,
       'mimeType' : 'application/pdf',
@@ -145,12 +148,16 @@ function generateFileName(submitter) {
  *
  * @param {Error} err Thrown error
  */
-function errorHandler(err) {
+function errorHandler(err, e) {
   console.error(err)
   MailApp.sendEmail(
     MAINTAINER,
     "ERROR " + MAIL_TITLE,
-    `${err.stack}`
+    `Plik: ${SpreadsheetApp.getActiveSpreadsheet().getName()}
+URL: ${SpreadsheetApp.getActiveSpreadsheet().getUrl()}
+Formularz: ${JSON.stringify(e.namedValues)}
+
+${err.stack}`
   )
   throw err
 }
