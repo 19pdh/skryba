@@ -101,7 +101,7 @@ function sendFile(sendTo, googleFile, submitter) {
   const options = {
     name: "Skryba",
     replyTo: sendTo,
-    attachments : generatePDFAttachment(googleFile)
+    attachments : generatePDFAttachment(googleFile, submitter)
   }
   MailApp.sendEmail(
     sendTo,
@@ -118,7 +118,7 @@ function sendFile(sendTo, googleFile, submitter) {
  * @param {Drive.File} googleFile File to create attachment from
  * @return {Object} Attachment description for MailApp.sendEmail
  */
-function generatePDFAttachment(googleFile) {
+function generatePDFAttachment(googleFile, submitter) {
   const pdfBlob = googleFile.getAs('application/pdf')
   return {
     fileName: `${generateFileName(submitter)}.pdf`,
