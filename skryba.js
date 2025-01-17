@@ -5,7 +5,7 @@ const RESPONSE_SHEET = "form";
 const SETTINGS_SHEET = "settings";
 
 const MAIL_TITLE = "[Skryba] Uzupełniony plik";
-const mailBody = (submitter, file) => `Formularz uzupełniony przez: ${submitter}
+const mailBody = (respondent, file) => `Formularz uzupełniony przez: ${respondent}
 
 Uzupełniony plik w wersji edytowalnej: ${file.getUrl()}`;
 
@@ -20,13 +20,13 @@ async function onFormSubmit(e) {
     Logger.log(e.namedValues)
     const rowNumber = e.range.getRow()
     const response = getFormResponse(rowNumber);
-    const submitter = getSubmitter(response);
+    const respondent = getRespondent(response);
   
     const settings = getSettings();
   
     const filledDocument = await generateDocument(settings, response);
 
-    sendFile(settings.sendTo, filledDocument, submitter);
+    sendFile(settings.sendTo, filledDocument, respondent);
 
     updateRow(
       rowNumber,
@@ -95,18 +95,18 @@ function updateRow(rowNumber, entry) {
  *
  * @param {String} sendTo Email address
  * @param {Drive.File} googleFile File to create attachment from
- * @param {String} submitter Email address of form submitter
+ * @param {String} respondent Email address of form respondent
  */
-function sendFile(sendTo, googleFile, submitter) {
+function sendFile(sendTo, googleFile, respondent) {
   const options = {
     name: "Skryba",
     replyTo: sendTo,
-    attachments : generatePDFAttachment(googleFile, submitter)
+    attachments : generatePDFAttachment(googleFile, respondent)
   }
   MailApp.sendEmail(
     sendTo,
     MAIL_TITLE, 
-    mailBody(submitter, googleFile),
+    mailBody(respondent, googleFile),
     options
   )
 }
@@ -118,10 +118,10 @@ function sendFile(sendTo, googleFile, submitter) {
  * @param {Drive.File} googleFile File to create attachment from
  * @return {Object} Attachment description for MailApp.sendEmail
  */
-function generatePDFAttachment(googleFile, submitter) {
+function generatePDFAttachment(googleFile, respondent) {
   const pdfBlob = googleFile.getAs('application/pdf')
   return {
-    fileName: `${generateFileName(submitter)}.pdf`,
+    fileName: `${generateFileName(respondent)}.pdf`,
     mimeType : 'application/pdf',
     content : pdfBlob.getBytes()
   }
@@ -129,30 +129,30 @@ function generatePDFAttachment(googleFile, submitter) {
 
 /**
  * ### Description
- * Returns the "submitter" field from response values and throws error 
+ * Returns the "respondent" field from response values and throws error 
  * if it's not found
  *
  * @param {Array} values Array of object with parameters `name` and `value`
- * @return {String} Submitter mail address
+ * @return {String} Respondent mail address
  */
-function getSubmitter(values) {
-  const submitterArray = values.filter(el => el.name === "submitter")
-  if (submitterArray.length < 1) {
-    throw new Error("Field `submitter` not found in form submission")
+function getRespondent(values) {
+  const respondentArray = values.filter(el => el.name === "respondent")
+  if (respondentArray.length < 1) {
+    throw new Error("Field `respondent` not found in form submission")
   }
-  return submitterArray[0].value
+  return respondentArray[0].value
 }
 
 /**
  * ### Description
  * Generate name for the new file
  *
- * @param {String} submitter Mail of the submitter user
+ * @param {String} respondent Mail of the respondent user
  * @return {String} New file name
  */
-function generateFileName(submitter) {
+function generateFileName(respondent) {
   const fileName = SpreadsheetApp.getActiveSpreadsheet().getName() 
-  return `${fileName} ${submitter} - wypełniony szablon`;
+  return `${fileName} ${respondent} - wypełniony szablon`;
 }
 
 /**
@@ -225,7 +225,7 @@ async function generateDocument(settings, values) {
  */
 async function generateFromDocs(templateFile, values, folder) {
   const newFile = templateFile.makeCopy(
-    generateFileName(getSubmitter(values)), 
+    generateFileName(getRespondent(values)), 
     folder
   );
   fillTemplate(newFile, values)
